@@ -14,9 +14,9 @@ def loginMessage():
     password = input("input password\t:")
     if not password:
         password = "t80546"
-    test1 = requests.get(url)
-    data = re.findall('"sub-nav".*?href="//.*?"',test1.text)
-    print(data)
+    #test1 = requests.get(url)
+    #data = re.findall('"sub-nav".*?href="//.*?"',test1.text)
+    #print(data)
 
     return url, account, password
 
