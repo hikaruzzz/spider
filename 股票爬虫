@@ -1,0 +1,48 @@
+from bs4 import BeautifulSoup  
+import requests  
+import csv  
+
+
+#检测url地址
+def check_link(url):
+	try:
+		r = requests.get(url)
+		r.raise_for_status()
+		r.encoding = r.apparent_encoding
+		return r.text
+	except:
+		print( "404 not found")
+
+
+#财经网中的代码，a标签的href属性中的网址链接中带有对应号码，解析出来即可
+
+def get_stocklist(lst,html):  
+  soup = BeautifulSoup(html,'html.parser')
+	a = soup.find_all('a') 
+    
+	#用正则表达式匹配出股票代码  [s][hz]\\d{6}
+	
+	#由于在html中有很多的a标签，但是有些a标签中没有href属性，因此上述程序在运行的时候
+	#出现异常，所有对上述的程序还要进行try…except来对程序进行异常处理，代码如下：
+	for i in a:
+		try:
+			href = i.attrs['href']
+			lst.append(re.findall(r"[s][hz]\\d{6}",href)[0])
+		except:
+			continue
+
+
+for stock in lst:
+	url = stockURL + stock + ".html"
+	html = check_link(url)
+
+
+def main():
+	urli = []  
+    url = "http://r.kaoyanbox.net/rank1.html"  
+#1.获得一个页面	
+    rs = check_link(url)  
+#2.解析页面，找到所有a标签
+    get_stocklist(urli,rs) 
+ 
+    save_contents(urli) 
