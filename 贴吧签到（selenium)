@@ -6,8 +6,8 @@ import re
 def loginMessage():
     url = input("input url(host)\t:")
     if not url:
-        #url = 'https://tieba.baidu.com/index.html'
-        url = 'https://pan.baidu.com/s/1jKioQOI'
+        url = 'https://tieba.baidu.com/index.html'  #百度贴吧
+        #url = 'https://pan.baidu.com/s/1jKioQOI'  #百度网盘
     account = input("input account\t:")
     if not account:
         account = "tpowerful"
@@ -25,15 +25,6 @@ def inputAv(AV,driver):
 
     driver.find_element_by_class_name("sub-nav").click()
     print(AV)
-def main():
-    messageLogin = []
-    messageLogin = loginMessage()
-    driver = webdriver.Edge()
-    driver.get(messageLogin[0]) #获得messageLogin函数的返回值
-    login(driver,messageLogin[1],messageLogin[2])
-    AV = "av14031972"
-    inputAv(AV,driver)
-    driver.find_element_by_class_name("g-clearfix").send_keys("JS-item-active")
 
 def login(driver,account,password):
     try:
@@ -57,6 +48,17 @@ def login(driver,account,password):
     #点一键签到
     driver.find_element_by_class_name("j_sign_btn sign_btn sign_btn_nonmember").click()
     #点
+
+def main():
+    messageLogin = []
+    messageLogin = loginMessage()
+    driver = webdriver.Edge()
+    driver.get(messageLogin[0]) #获得messageLogin函数的返回值
+    login(driver,messageLogin[1],messageLogin[2])
+    AV = "av14031972"
+    inputAv(AV,driver)
+    driver.find_element_by_class_name("g-clearfix").send_keys("JS-item-active")
+
 
 if __name__== '__main__':
     main()
