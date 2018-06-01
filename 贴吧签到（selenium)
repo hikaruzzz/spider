@@ -1,0 +1,62 @@
+# -*-coding:utf-8 -*-
+from selenium import webdriver
+import time
+import requests
+import re
+def loginMessage():
+    url = input("input url(host)\t:")
+    if not url:
+        #url = 'https://tieba.baidu.com/index.html'
+        url = 'https://pan.baidu.com/s/1jKioQOI'
+    account = input("input account\t:")
+    if not account:
+        account = "tpowerful"
+    password = input("input password\t:")
+    if not password:
+        password = "t80546"
+    test1 = requests.get(url)
+    data = re.findall('"sub-nav".*?href="//.*?"',test1.text)
+    print(data)
+
+    return url, account, password
+
+def inputAv(AV,driver):
+    time.sleep(3)
+
+    driver.find_element_by_class_name("sub-nav").click()
+    print(AV)
+def main():
+    messageLogin = []
+    messageLogin = loginMessage()
+    driver = webdriver.Edge()
+    driver.get(messageLogin[0]) #获得messageLogin函数的返回值
+    login(driver,messageLogin[1],messageLogin[2])
+    AV = "av14031972"
+    inputAv(AV,driver)
+    driver.find_element_by_class_name("g-clearfix").send_keys("JS-item-active")
+
+def login(driver,account,password):
+    try:
+        driver.find_element_by_xpath('//div[@class="u_menu_item"]/a').click()
+        time.sleep(2)
+        #点击登陆
+        driver.find_element_by_class_name("tang-pass-footerBarULogin").click()
+        time.sleep(1)
+        #点击账号登陆
+        try:
+            driver.find_element_by_id("TANGRAM__PSP_10__userName").send_keys(account)
+            driver.find_element_by_id("TANGRAM__PSP_10__password").send_keys(password)
+            driver.find_element_by_id("TANGRAM__PSP_10__submit").click()
+        except:
+            driver.find_element_by_id("TANGRAM__PSP_10__password").send_keys("t80546")
+            driver.find_element_by_id("TANGRAM__PSP_10__submit").click()
+    except:
+        pass
+    time.sleep(3)
+    driver.find_element_by_class_name("onekey_btn").click()
+    #点一键签到
+    driver.find_element_by_class_name("j_sign_btn sign_btn sign_btn_nonmember").click()
+    #点
+
+if __name__== '__main__':
+    main()
