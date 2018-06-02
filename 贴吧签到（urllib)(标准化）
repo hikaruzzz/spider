@@ -1,0 +1,148 @@
+'''
+贴吧签到
+v3.0
+2018年6月2日 14时
+'''
+
+# coding = utf-8
+
+import ssl
+import urllib.request
+import urllib.parse
+import re
+import time
+
+
+url_recv_decode = "" # 网页返回数据
+user_id = ""
+user_name = ""
+baData_list = [] # 吧数据
+header ={}
+
+def loginInAccount():
+    # 关闭https验证方法
+    global header, url_recv_decode
+    ssl._create_default_https_context = ssl._create_unverified_context
+
+    targetUrl = 'https://tieba.baidu.com/index.html'
+    print("--------贴吧签到鸡---------")
+    print("target url：",targetUrl)
+    while True:
+        cookie = input("输入网页已登陆cookie (TIPS：请求 URL: https://tieba.baidu.com/ ) ：")
+        user_agent = input("输入user_agent（建议输入，防爬？）：")
+
+        header = {
+            # cookie在网络框里面找   请求 URL: https://tieba.baidu.com/
+            "Cookie": cookie,
+            "User-Agent": user_agent
+        }
+
+        # 开始登陆（用header方法）
+        url_recv = urllib.request.Request(url="https://tieba.baidu.com/index.html",headers=header)  # 返回<urllib.request.Request object at 0x000001B59FB61BA8>文件描述
+        url_recv_decode = urllib.request.urlopen(url_recv).read().decode('utf-8')  # 读取文件数据，此处decode()是吧 bytes -->> str
+        #print(url_recv_decode)  # for test
+
+        user_id = re.findall('"user_id": "(.*?)".*?"name": "', url_recv_decode)[0]
+        if user_id:
+            print("\n《《登陆成功》》")
+            break
+        else:
+            print("\n信息错误，请留意不要带“”")
+
+def urlRecvAnalyse(url_recv_decode_temp):
+    # 分析数据
+
+    global baData_list,user_id,user_name
+
+    baData_list = re.findall('"forum_id":(.*?),"forum_name":"(.*?)".*?"in_time":(.*?),"level_id":(.*?),',url_recv_decode_temp)
+    # baData_list[0][1]是第一个贴吧的id，以此类推，baData_list[0][3]是第一个贴吧的level
+
+    #print("baData_list",baData_list)  # for test
+    #print("url_recv_decode",url_recv_decode_temp)  # for test
+
+    user_id, user_name = re.findall('"user_id": "(.*?)".*?"name": "(.*?)"', url_recv_decode_temp)[0]
+
+
+def showBa(baData_list_temp):
+
+    print("user_id:", user_id)
+    print("user_name:", user_name)
+    print("\n--------关注贴吧：---------")
+    # 逐个转码 '\\u795e' -->> utf-8中文
+    temp = 0
+    for forum_temp in baData_list_temp:
+        # 把贴吧名转utf-8
+        print(forum_temp[1].encode('utf-8').decode("unicode_escape"), "\n关注时间：", shiftTime(int(forum_temp[2])), " LV：",forum_temp[3],"\n")
+        temp += 1
+        if temp == len(baData_list_temp) / 2:
+            # 此if用于解决两份重复re返回数据的问题
+            break
+    print("----------------------------")
+
+
+def registerBa():
+    # 签到函数
+    global baData_list,header
+
+    fa = input("任意键 开始签到,ctrl+c退出")
+
+    print("避免百度反爬虫，设定签到间隔为 2333纳秒")
+    for i in range(len(baData_list)):
+        ba_name_ch = baData_list[i][1].encode('utf-8').decode("unicode_escape")
+        # 此处用中文吧名，然后用urllib.parse.quote转码
+
+        kw = ba_name_ch  # str格式
+        #print("urlllib.parse.quote:", urllib.parse.quote(kw))  # for test
+        ba_url = "http://tieba.baidu.com/f?kw=" + urllib.parse.quote(kw)
+
+        tbs_data = urllib.request.urlopen(urllib.request.Request(url=ba_url, headers=header)).read().decode("utf-8")
+        tbs_data_re = re.findall('\'tbs\': "(.*?)"', tbs_data)
+
+        #print("当前贴吧tbs码：", tbs_data_RE[0]) for test
+
+        # 点击签到之后，网络框出现的add值
+        url = "http://tieba.baidu.com/sign/add"
+        # 请求正文，含有对应贴吧的专属信息
+        post_data = {
+            "ie": "utf - 8",
+            "kw": kw,
+            "tbs": tbs_data_re,
+
+        }
+
+        data = urllib.parse.urlencode(post_data).encode("utf-8")
+        post_request = urllib.request.Request(url=url, data=data, headers=header)
+
+        # 发送登陆指令
+        recv_data = urllib.request.urlopen(post_request).read().decode('utf-8')
+
+        # 返回报文
+        re_return = re.findall('"error":"(.*?)",', recv_data)[0]
+        # print(recv_data) #打印全报文
+
+        if re_return.encode('utf-8').decode('unicode_escape'):
+            # py3取消了str的decode，所以避免报错需要st.encode('utf-8').decode('unicode_escape'))
+            print(ba_name_ch, " 吧，error返回：", re_return.encode('utf-8').decode('unicode_escape'))
+        else:
+            print(ba_name_ch, " 吧 成功签到")
+        time.sleep(2.333)
+
+
+def shiftTime(timestamp):
+    #转换时间戳，返回正常时间
+    time_l = time.localtime(timestamp)
+    return time.strftime("%Y-%m-%d %H:%M:%S", time_l)
+
+
+
+def main():
+    global url_recv_decode,user_name,user_id,baData_list,header
+
+    loginInAccount()
+    urlRecvAnalyse(url_recv_decode)
+    showBa(baData_list)
+    registerBa()
+
+
+if __name__ == '__main__':
+    main()
