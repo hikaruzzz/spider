@@ -7,6 +7,7 @@ v3.0
 # coding = utf-8
 
 import ssl
+
 import urllib.request
 import urllib.parse
 import re
@@ -20,6 +21,7 @@ baData_list = [] # 吧数据
 header ={}
 
 def loginInAccount():
+    # 登陆
     # 关闭https验证方法
     global header, url_recv_decode
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -64,7 +66,8 @@ def urlRecvAnalyse(url_recv_decode_temp):
 
 
 def showBa(baData_list_temp):
-
+    # 显示贴吧列表
+    
     print("user_id:", user_id)
     print("user_name:", user_name)
     print("\n--------关注贴吧：---------")
