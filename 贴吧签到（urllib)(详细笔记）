@@ -1,0 +1,110 @@
+'''
+贴吧签到 urllib法
+v2.0
+
+'''
+
+# coding = utf-8
+
+import ssl
+import urllib.request
+import urllib.parse # 包？
+import re
+import time
+
+
+
+
+def shiftTime(timestamp):
+    #转换时间戳，返回正常时间
+    time_l = time.localtime(timestamp)
+    return time.strftime("%Y-%m-%d %H:%M:%S", time_l)
+
+
+# 关闭https验证方法
+ssl._create_default_https_context = ssl._create_unverified_context
+
+targetUrl = 'https://tieba.baidu.com/index.html'
+cookie = "Hm_lpvt_98b9d8c2fd6608d564bf2ac2ae642948=1527910984; showCardBeforeSign=1; TIEBAUID=ec04f40c7bdd9401d01d6894; TIEBA_USERTYPE=fcf922b16d82c806daefdb5f; Hm_lvt_98b9d8c2fd6608d564bf2ac2ae642948=1527861395,1527861840,1527905286,1527907353; STOKEN=06d5d5a020ac17cc5d4517fa83d3d098230a310358ca4db4efa36d5ada2d620c; PMS_JT=%28%7B%22s%22%3A1527910996003%2C%22r%22%3A%22https%3A//tieba.baidu.com/%22%7D%29; H_PS_PSSID=; PSINO=7; BAIDUID=E42CD4E13F596602C9AFCE42A763F2D0:FG=1; BIDUPSID=C4197B2BBDA64FE94DF0320E446D595D; PSTM=1527867832; BDORZ=FFFB88E999055A3F8A630C64834BD6D0; BDUSS=jhiV052dzlwRHZid1FrSn5PYlV4US1STmd-NFFUVFpQanR6ZU9pb29KakYyemhiQVFBQUFBJCQAAAAAAAAAAAEAAAATQMIidHBvd2VyZnVsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMVOEVvFThFbc"
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299"
+header = {
+    #cookie在网络框里面找   请求 URL: https://tieba.baidu.com/
+
+    #"Cookie":"TIEBAUID=ec04f40c7bdd9401d01d6894; TIEBA_USERTYPE=39141a92e8cab6b8d33177ec; Hm_lvt_98b9d8c2fd6608d564bf2ac2ae642948=1527557410,1527848097,1527855746,1527857160; STOKEN=805d8ff21de90fb92a190a46ea69485ac92a63a3fdea08c7802884704172c2d5; Hm_lvt_287705c8d9e2073d13275b18dbd746dc=1520176273,1520671752,1520671768,1521511100; bdshare_firstime=1514520731572; Hm_lpvt_98b9d8c2fd6608d564bf2ac2ae642948=1527857160; BDRCVFR[gTTkcKU_il6]=c-I_unvEuPDfj6snjndnHmkg1FxuAT; PSINO=6; H_PS_PSSID=; BAIDUID=668F724F53E985A23E1F0F434F88B1DF:FG=1; BIDUPSID=C4197B2BBDA64FE94DF0320E446D595D; PSTM=1514520705; BDORZ=FFFB88E999055A3F8A630C64834BD6D0; MCITY=-%3A; BDUSS=1ZWWc1YjJrWUpiS2ZQZ2paMUU1V3VVRmE3SUFteXFrYy1FY3RRfnZzZFgwY2hhQVFBQUFBJCQAAAAAAAAAAAEAAAATQMIidHBvd2VyZnVsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFdEoVpXRKFaOG",
+    "Cookie":cookie,
+    "User-Agent": user_agent
+}
+
+# 开始登陆（用header方法）
+url_recv = urllib.request.Request(url="https://tieba.baidu.com/index.html",headers=header)  # 返回<urllib.request.Request object at 0x000001B59FB61BA8>文件描述
+url_recv_decode = urllib.request.urlopen(url_recv).read().decode('utf-8')  # 读取文件数据，此处decode()是吧 bytes -->> str
+
+
+# print(urllib.request.urlopen(urllib.request.Request(url="https://tieba.baidu.com/index.html",headers=header)).read().decode())  # for test
+
+# re.findall 返回所有贴吧名的列表。。re注意，findall返回的是括号里面的（.*?)
+# forumID_lis 返回值： [('303010', '\\u8087\\u5e86\\u5b66\\u9662'), ('130154', '\\u795e\\u821f\\u7b14\\u8bb0\\u672c'),..]
+baData_list = re.findall('"forum_id":(.*?),"forum_name":"(.*?)".*?"in_time":(.*?),"level_id":(.*?),', url_recv_decode)
+
+#print(url_recv_decode) # for test
+
+user_id, user_name = re.findall('"user_id": "(.*?)".*?"name": "(.*?)"', url_recv_decode)[0]
+print("user_id:", user_id)
+print("user_name:", user_name)
+print("--------关注贴吧：---------")
+# 逐个转码 '\\u795e' -->> utf-8中文
+temp = 0
+for forum_temp in baData_list:
+    # 把贴吧名转utf-8
+    print(forum_temp[1].encode('utf-8').decode("unicode_escape"),"\n关注时间：",shiftTime(int(forum_temp[2]))," LV：",forum_temp[3],"\n")
+    temp += 1
+    if temp == len(baData_list)/2:
+        # 此if用于解决两份重复re返回数据的问题
+        break
+print("----------------------------")
+
+
+ba_name_ch = baData_list[1][1].encode('utf-8').decode("unicode_escape")
+# 贴吧对应url里面，又如下格式（贴吧主页+特定贴吧码）
+# 此处用中文吧名，然后用urllib.parse.quote转码
+kw = ba_name_ch
+
+forum_url = "http://tieba.baidu.com/f?kw=" + urllib.parse.quote(kw)
+tbs_data = urllib.request.urlopen(urllib.request.Request(url=forum_url,headers=header)).read().decode("utf-8")
+tbs_data_RE = re.findall('\'tbs\': "(.*?)"',tbs_data)
+
+
+print("当前贴吧tbs码：",tbs_data_RE[0])
+
+# 点击签到之后，网络框出现的add值
+url = "http://tieba.baidu.com/sign/add"
+# 请求正文，含有对应贴吧的专属信息
+post_data = {
+    "ie":"utf - 8",
+    "kw": kw,
+    "tbs": tbs_data_RE,
+
+}
+
+data = urllib.parse.urlencode(post_data).encode("utf-8")
+post_request = urllib.request.Request(url=url,data=data,headers=header)
+
+# 发送点击登陆指令
+recv_data = urllib.request.urlopen(post_request).read().decode('utf-8')
+# 返回报文
+re_return = re.findall('"error":"(.*?)",',recv_data)[0]
+# print(recv_data) #打印全报文
+
+if re_return.encode('utf-8').decode('unicode_escape'):
+    # py3取消了str的decode，所以避免报错需要st.encode('utf-8').decode('unicode_escape'))
+    print(ba_name_ch," 吧，error返回：",re_return.encode('utf-8').decode('unicode_escape'))
+else:
+    print(ba_name_ch," 吧 成功签到")
+
+
+def main():
+    pass
+
+
+if __name__ == '__main__':
+    main()
