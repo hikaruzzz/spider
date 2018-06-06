@@ -1,5 +1,5 @@
 '''
-编码问题，window文件读写error，cookie文件读写/网页中读取，urllib用例
+http.cookiejar，编码问题，window文件读写error，cookie文件读写/网页中读取，urllib用例
 
 '''
 
@@ -31,14 +31,16 @@ recvmes = urllib.request.urlopen(response)
 # 转码 数据流-》网页显示格式（utf-8）
 recvmes_decode = recvmes.read().decode('utf-8')
 
-
 # 读取网页cookie ，保存到文件
 save_filename = './cookie1.txt'
 cookie_read = http.cookiejar.MozillaCookieJar(save_filename)
+
+# 构建opener（相当于高级urlopen）
 handler = urllib.request.HTTPCookieProcessor(cookie_read)
 opener = urllib.request.build_opener(handler)
 res = opener.open(url)
 
+# 注意cookie返回值在cookie_read
 cookie_read.save(ignore_discard=True, ignore_expires=True)
 print(cookie_read)
 
