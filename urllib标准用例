@@ -1,1 +1,55 @@
+'''
+编码问题，window文件读写error，cookie文件读写/网页中读取，urllib用例
+
+'''
+
+
+#coding = utf-8
+
+import urllib.request  # 请求模块,带头部信息（header）访问
+import urllib.parse  # 解析模块
+import http.cookiejar
+
+# 头部信息
+header = {
+    'User-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+
+}
+url = 'https://www.baidu.com/'
+
+# 传入数据
+data_to_send = {
+    'q': 'boynextdoor'
+}
+
+# 传入数据先进行转码-》数据流（用urlencode)
+data = urllib.parse.urlencode(data_to_send).encode('utf-8')
+# 用头&数据 进行请求（可以缺data，header）
+response = urllib.request.Request(url=url, data=data, headers=header)
+#
+recvmes = urllib.request.urlopen(response)
+
+# 转码 数据流-》网页显示格式（utf-8）
+recvmes_decode = recvmes.read().decode('utf-8')
+
+
+# 读取网页cookie ，保存到文件
+save_filename = './cookie1.txt'
+cookie_read = http.cookiejar.MozillaCookieJar(save_filename)
+handler = urllib.request.HTTPCookieProcessor(cookie_read)
+opener = urllib.request.build_opener(handler)
+res = opener.open(url)
+
+cookie_read.save(ignore_discard=True, ignore_expires=True)
+print(cookie_read)
+
+# 读取文件中的cookie
+cookie = http.cookiejar.MozillaCookieJar()
+cookie.load('./cookie1.txt', ignore_discard=True, ignore_expires=True)
+
+
+# window的txt用gbk码，所以要用encoding='utf-8'，用utf8格式打开。避免出错
+# error: 'gbk' codec can't encode character '\xbb'
+open('./test.txt', 'w', encoding='utf-8').write(recvmes_decode)
+
 
